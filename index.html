@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veršík - Herní Procvičování Biblických Veršů</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti pro oslavné efekty -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'duo-green': '#58cc02',
+                        'duo-green-dark': '#46a302',
+                        'duo-blue': '#1cb0f6',
+                        'duo-blue-dark': '#1899d6',
+                        'duo-red': '#ff4b4b',
+                        'duo-red-dark': '#ea2b2b',
+                        'duo-yellow': '#ffc800',
+                        'duo-yellow-dark': '#e5b200',
+                        'duo-purple': '#ce82ff',
+                        'duo-gray': '#e5e5e5',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+        body {
+            font-family: 'Nunito', sans-serif;
+            user-select: none;
+        }
+        .btn-duo {
+            transition: all 0.1s ease;
+            position: relative;
+        }
+        .btn-duo:active {
+            transform: translateY(4px);
+            box-shadow: none !important;
+        }
+        .btn-green {
+            background-color: #58cc02;
+            box-shadow: 0 4px 0 #46a302;
+            color: white;
+        }
+        .btn-blue {
+            background-color: #1cb0f6;
+            box-shadow: 0 4px 0 #1899d6;
+            color: white;
+        }
+        .btn-purple {
+            background-color: #ce82ff;
+            box-shadow: 0 4px 0 #b356f5;
+            color: white;
+        }
+        .btn-yellow {
+            background-color: #ffc800;
+            box-shadow: 0 4px 0 #e5e5e5;
+            color: white;
+        }
+        .btn-red {
+            background-color: #ff4b4b;
+            box-shadow: 0 4px 0 #ea2b2b;
+            color: white;
+        }
+        .btn-gray {
+            background-color: #f7f7f7;
+            box-shadow: 0 4px 0 #e5e5e5;
+            color: #4b5563;
+        }
+        .word-tile {
+            transition: all 0.15s ease;
+        }
+        .word-tile:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between selection:bg-duo-green selection:text-white">
+
+    <!-- INFORMAČNÍ MODAL (BEZ ALERTU) -->
+    <div id="custom-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border-4 border-slate-200 text-center space-y-4">
+            <div id="modal-icon" class="text-5xl text-duo-blue">
+                <i class="fa-solid fa-circle-info"></i>
+            </div>
+            <h3 id="modal-title" class="text-xl font-black text-slate-800">Upozornění</h3>
+            <p id="modal-message" class="text-slate-600 font-bold leading-relaxed"></p>
+            <button onclick="closeModal()" class="w-full btn-duo btn-blue font-extrabold py-3 rounded-2xl text-lg">
+                Rozumím
+            </button>
+        </div>
+    </div>
+
+    <!-- POTVRZOVACÍ MODAL (PRO MAZÁNÍ A UKONČENÍ HRY) -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border-4 border-slate-200 text-center space-y-4">
+            <div id="confirm-icon" class="text-5xl text-duo-yellow">
+                <i class="fa-solid fa-circle-question"></i>
+            </div>
+            <h3 id="confirm-title" class="text-xl font-black text-slate-800">Potvrzení</h3>
+            <p id="confirm-message" class="text-slate-600 font-bold leading-relaxed">Opravdu to chcete provést?</p>
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button onclick="closeConfirmModal()" class="btn-duo btn-gray font-extrabold py-3 rounded-2xl text-md">
+                    Zrušit
+                </button>
+                <button id="btn-confirm-action" class="btn-duo btn-red font-extrabold py-3 rounded-2xl text-md">
+                    Potvrdit
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HLAVNÍ NAVIGACE (HORNÍ LIŠTA) -->
+    <header class="bg-white border-b-2 border-slate-200 sticky top-0 z-40">
+        <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div onclick="showScreen('home')" class="cursor-pointer flex items-center gap-2">
+                <span class="text-3xl">📖</span>
+                <span class="text-2xl font-black tracking-wider text-duo-green">VERŠÍK</span>
+            </div>
+            
+            <!-- STAVY (Srdíčka, Streak, XP & Cloud Status) -->
+            <div class="flex items-center gap-3 font-black text-lg">
+                <div class="flex items-center gap-1 text-duo-red" title="Životy">
+                    <i class="fa-solid fa-heart text-xl"></i>
+                    <span id="stat-lives">5</span>
+                </div>
+                <div class="flex items-center gap-1 text-duo-yellow" title="Denní série">
+                    <i class="fa-solid fa-fire text-xl"></i>
+                    <span id="stat-streak">0</span>
+                </div>
+                <div class="flex items-center gap-1 text-duo-blue" title="XP Body">
+                    <i class="fa-solid fa-bolt text-xl"></i>
+                    <span id="stat-xp">0</span>
+                </div>
+                <!-- Cloud sync indicator -->
+                <div id="cloud-status" class="text-xs px-2 py-1 bg-slate-100 rounded-lg text-slate-500 font-bold flex items-center gap-1" title="Stav Cloudu">
+                    <i class="fa-solid fa-cloud-arrow-up text-duo-blue"></i>
+                    <span id="cloud-status-text">Připojování...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- HLAVNÍ OBSAHOVÁ ČÁST -->
+    <main class="max-w-2xl mx-auto w-full px-4 py-6 flex-grow">
+
+        <!-- ==================== OBRAZOVKA DOMŮ ==================== -->
+        <section id="screen-home" class="space-y-6">
+            <div class="bg-white border-2 border-slate-200 rounded-3xl p-6 text-center space-y-4 shadow-sm">
+                <h1 class="text-2xl sm:text-3xl font-black text-slate-800">Procvičuj Biblické Verše</h1>
+                <p class="text-slate-500 font-bold">Uč se verše hravě s uložením v cloudu!</p>
+                
+                <div class="pt-2 space-y-3">
+                    <button onclick="startPracticeSession()" class="w-full btn-duo btn-green font-black py-4 rounded-2xl text-xl tracking-wide uppercase">
+                        <i class="fa-solid fa-play mr-2"></i> Náhodný Trénink (10 Veršů)
+                    </button>
+                    
+                    <!-- TLAČÍTKO DOPLNIT ŽIVOTY -->
+                    <div id="refill-lives-container" class="hidden">
+                        <button onclick="startHeartRefillSession()" class="w-full btn-duo btn-red font-black py-3.5 rounded-2xl text-lg tracking-wide uppercase flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-heart-pulse text-2xl animate-pulse"></i> Doplnit Životy (Trénink zdarma)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VÝBĚR KONKRÉTNÍHO HERNÍHO MÓDU -->
+            <div class="space-y-3">
+                <h2 class="text-lg font-black text-slate-700 px-1">Vyber si konkrétní hru:</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button onclick="startPracticeSession('assemble')" class="bg-white border-2 border-slate-200 p-4 rounded-2xl text-left hover:border-duo-blue transition-all flex items-center gap-3 shadow-sm group">
+                        <div class="bg-blue-100 text-duo-blue w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 group-hover:scale-110 transition-transform">
+                            🧩
+                        </div>
+                        <div>
+                            <div class="font-black text-slate-800 text-md">Skládačka slov</div>
+                            <div class="text-xs font-bold text-slate-400">Slož verš ze zadaných tlačítek</div>
+                        </div>
+                    </button>
+
+                    <button onclick="startPracticeSession('fill')" class="bg-white border-2 border-slate-200 p-4 rounded-2xl text-left hover:border-duo-green transition-all flex items-center gap-3 shadow-sm group">
+                        <div class="bg-emerald-100 text-duo-green w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 group-hover:scale-110 transition-transform">
+                            ✍️
+                        </div>
+                        <div>
+                            <div class="font-black text-slate-800 text-md">Doplňovačka</div>
+                            <div class="text-xs font-bold text-slate-400">Napiš chybějící slovo v textu</div>
+                        </div>
+                    </button>
+
+                    <button onclick="startPracticeSession('mc')" class="bg-white border-2 border-slate-200 p-4 rounded-2xl text-left hover:border-duo-purple transition-all flex items-center gap-3 shadow-sm group">
+                        <div class="bg-purple-100 text-duo-purple w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 group-hover:scale-110 transition-transform">
+                            ❓
+                        </div>
+                        <div>
+                            <div class="font-black text-slate-800 text-md">Kvíz odkazů</div>
+                            <div class="text-xs font-bold text-slate-400">Vyber správný odkaz k verši</div>
+                        </div>
+                    </button>
+
+                    <button onclick="startPracticeSession('fade')" class="bg-white border-2 border-slate-200 p-4 rounded-2xl text-left hover:border-duo-yellow transition-all flex items-center gap-3 shadow-sm group">
+                        <div class="bg-amber-100 text-duo-yellow w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 group-hover:scale-110 transition-transform">
+                            👁️
+                        </div>
+                        <div>
+                            <div class="font-black text-slate-800 text-md">Mizející text</div>
+                            <div class="text-xs font-bold text-slate-400">Zapamatuj si a ověř text</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- DALŠÍ SEKTORY -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <button onclick="showScreen('progress')" class="bg-white border-2 border-slate-200 p-5 rounded-3xl text-left hover:border-duo-blue transition-all group flex items-center justify-between shadow-sm">
+                    <div>
+                        <div class="text-duo-blue font-black text-lg flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line"></i> Přehled Pokroku
+                        </div>
+                        <p class="text-xs font-bold text-slate-400 mt-1">Zobrazit naučené verše & trénovat konkrétní</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-duo-blue transition-colors"></i>
+                </button>
+
+                <button onclick="showScreen('manage')" class="bg-white border-2 border-slate-200 p-5 rounded-3xl text-left hover:border-duo-purple transition-all group flex items-center justify-between shadow-sm">
+                    <div>
+                        <div class="text-duo-purple font-black text-lg flex items-center gap-2">
+                            <i class="fa-solid fa-book-bookmark"></i> Moje Verše
+                        </div>
+                        <p class="text-xs font-bold text-slate-400 mt-1">Přidávat, upravovat a importovat z CSV</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-duo-purple transition-colors"></i>
+                </button>
+            </div>
+
+            <!-- USER INFO BOX -->
+            <div id="user-info-bar" class="p-4 bg-slate-100 rounded-2xl border border-slate-200 text-xs font-bold text-slate-500 flex justify-between items-center">
+                <span>Účet: <span id="user-id-display" class="font-mono text-slate-700">Načítání...</span></span>
+                <span class="text-duo-green flex items-center gap-1"><i class="fa-solid fa-shield-halved"></i> Cloud Zabezpečeno</span>
+            </div>
+        </section>
+
+        <!-- ==================== OBRAZOVKA PŘEHLEDU POKROKU ==================== -->
+        <section id="screen-progress" class="hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <button onclick="showScreen('home')" class="text-slate-500 hover:text-slate-700 font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> Zpět
+                </button>
+                <h2 class="text-xl font-black text-slate-800">Přehled Pokroku</h2>
+            </div>
+
+            <!-- Statistiky karty -->
+            <div class="grid grid-cols-3 gap-3 text-center">
+                <div class="bg-white border-2 border-slate-200 p-3 rounded-2xl">
+                    <div id="prog-total" class="text-2xl font-black text-slate-800">0</div>
+                    <div class="text-xs font-bold text-slate-400">Celkem</div>
+                </div>
+                <div class="bg-white border-2 border-slate-200 p-3 rounded-2xl">
+                    <div id="prog-learning" class="text-2xl font-black text-duo-yellow">0</div>
+                    <div class="text-xs font-bold text-slate-400">V procesu</div>
+                </div>
+                <div class="bg-white border-2 border-slate-200 p-3 rounded-2xl">
+                    <div id="prog-mastered" class="text-2xl font-black text-duo-green">0</div>
+                    <div class="text-xs font-bold text-slate-400">Naučeno</div>
+                </div>
+            </div>
+
+            <!-- Filtry -->
+            <div class="flex gap-2 overflow-x-auto pb-1">
+                <button onclick="filterProgress('all')" id="filter-btn-all" class="px-4 py-2 rounded-xl font-bold text-sm bg-slate-800 text-white border-2 border-slate-800">Všechny</button>
+                <button onclick="filterProgress('new')" id="filter-btn-new" class="px-4 py-2 rounded-xl font-bold text-sm bg-white text-slate-600 border-2 border-slate-200">Nezkoušeno</button>
+                <button onclick="filterProgress('learning')" id="filter-btn-learning" class="px-4 py-2 rounded-xl font-bold text-sm bg-white text-slate-600 border-2 border-slate-200">V procesu</button>
+                <button onclick="filterProgress('mastered')" id="filter-btn-mastered" class="px-4 py-2 rounded-xl font-bold text-sm bg-white text-slate-600 border-2 border-slate-200">Naučeno</button>
+            </div>
+
+            <div id="progress-list" class="space-y-3"></div>
+        </section>
+
+        <!-- ==================== OBRAZOVKA SPRÁVY VERŠŮ ==================== -->
+        <section id="screen-manage" class="hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <button onclick="showScreen('home')" class="text-slate-500 hover:text-slate-700 font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> Zpět
+                </button>
+                <h2 class="text-xl font-black text-slate-800">Moje Verše</h2>
+            </div>
+
+            <!-- Formulář & CSV Tlačítka -->
+            <div class="bg-white border-2 border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-slate-100 pb-3">
+                    <h3 id="form-verse-title" class="font-black text-slate-700 text-md flex items-center gap-2">
+                        <i class="fa-solid fa-plus-circle text-duo-green"></i> Přidat nový verš
+                    </h3>
+                    
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <input type="file" id="csv-file-input" accept=".csv,.txt" class="hidden" onchange="handleCSVImport(event)">
+                        <button onclick="document.getElementById('csv-file-input').click()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3.5 py-1.5 rounded-xl text-sm flex items-center gap-2 transition-all border border-slate-300">
+                            <i class="fa-solid fa-file-import text-duo-green"></i> Import CSV
+                        </button>
+                        <button onclick="exportToCSV()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3.5 py-1.5 rounded-xl text-sm flex items-center gap-2 transition-all border border-slate-300">
+                            <i class="fa-solid fa-file-export text-duo-blue"></i> Exportovat CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hidden ID for edit mode -->
+                <input type="hidden" id="input-edit-id" value="">
+
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <input type="text" id="input-ref" placeholder="Odkaz (např. Jan 3:16)" class="border-2 border-slate-200 rounded-xl px-4 py-2 focus:border-duo-green focus:outline-none font-bold sm:col-span-2">
+                    <input type="text" id="input-translation" placeholder="Překlad (B21, CEP)" class="border-2 border-slate-200 rounded-xl px-4 py-2 focus:border-duo-green focus:outline-none font-bold">
+                    <input type="text" id="input-category" placeholder="Kategorie" class="border-2 border-slate-200 rounded-xl px-4 py-2 focus:border-duo-green focus:outline-none font-bold">
+                </div>
+                <textarea id="input-text" rows="3" placeholder="Znění verše..." class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-duo-green focus:outline-none resize-none font-bold"></textarea>
+                
+                <div class="flex justify-end gap-2">
+                    <button id="btn-cancel-edit" onclick="resetVerseForm()" class="hidden bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 px-4 rounded-xl text-md">
+                        Zrušit
+                    </button>
+                    <button id="btn-save-verse" onclick="saveVerseFromForm()" class="btn-duo btn-green font-black py-2.5 px-6 rounded-xl text-md flex items-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> Uložit verš
+                    </button>
+                </div>
+            </div>
+
+            <!-- Seznam Veršů ke správě -->
+            <div class="space-y-3" id="verses-list"></div>
+        </section>
+
+        <!-- ==================== HERNÍ OBRAZOVKA ==================== -->
+        <section id="screen-game" class="hidden space-y-6">
+            <!-- Herní Hlavička -->
+            <div class="flex items-center justify-between gap-4">
+                <button onclick="confirmExitGame()" class="text-slate-400 hover:text-slate-600 font-black text-2xl p-2 rounded-xl hover:bg-slate-100 transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="flex-grow bg-slate-200 h-4 rounded-full overflow-hidden">
+                    <div id="game-progress-bar" class="bg-duo-green h-full w-0 transition-all duration-300"></div>
+                </div>
+            </div>
+
+            <!-- Odkaz verše a mód -->
+            <div class="text-center space-y-1">
+                <div id="game-verse-ref" class="text-2xl font-black text-slate-800"></div>
+                <div id="game-mode-title" class="text-sm font-bold text-duo-blue uppercase tracking-wider"></div>
+            </div>
+
+            <!-- Herní kontejner -->
+            <div id="game-container" class="min-h-[220px] flex flex-col justify-center"></div>
+
+            <!-- Vyhodnocení (Zobrazení chyb) -->
+            <div id="feedback-panel" class="hidden rounded-3xl p-5 border-2 space-y-3">
+                <div class="flex items-center gap-3 font-black text-xl" id="feedback-title"></div>
+                <div id="feedback-details" class="text-sm font-bold leading-relaxed"></div>
+            </div>
+
+            <!-- Patka hry s tlačítkem dál/kontrola -->
+            <div id="game-footer" class="pt-4 border-t-2 border-slate-100 flex justify-end">
+                <button id="btn-check" onclick="checkAnswer()" class="w-full sm:w-auto btn-duo btn-green font-black py-3.5 px-8 rounded-2xl text-lg uppercase tracking-wide">
+                    Zkontrolovat
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FIREBASE MODULES -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // APP CONFIG & GLOBALS
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'versik-app';
+        
+        // Sem vložte vaše údaje z Firebase Console -> Project Settings -> General -> Your apps
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "DOPLŇTE_VÁŠ_API_KEY",
+            authDomain: "DOPLŇTE_VÁŠ_PROJECT_ID.firebaseapp.com",
+            projectId: "DOPLŇTE_VÁŠ_PROJECT_ID",
+            storageBucket: "DOPLŇTE_VÁŠ_PROJECT_ID.appspot.com",
+            messagingSenderId: "DOPLŇTE_VÁŠ_SENDER_ID",
+            appId: "DOPLŇTE_VÁŠ_APP_ID"
+        };
+
+        let useLocalStorageFallback = false;
+
+        // DEFAULT VERSES
+        const DEFAULT_VERSES = [
+            { id: 'v1', reference: 'Jan 3:16', text: 'Neboť Bůh tak miloval svět, že dal svého jediného Syna, aby žádný, kdo v něho věří, nezahynul, ale měl život věčný.', translation: 'B21', category: 'Spása', level: 1, errors: 0 },
+            { id: 'v2', reference: 'Žalm 23:1', text: 'Hospodin je můj pastýř, nebudu mít nedostatek.', translation: 'CEP', category: 'Důvěra', level: 1, errors: 0 },
+            { id: 'v3', reference: 'Filipským 4:13', text: 'Všecko mohu v Kristu, který mi dává sílu.', translation: 'B21', category: 'Zaslíbení', level: 1, errors: 0 },
+            { id: 'v4', reference: 'Přísloví 3:5', text: 'Důvěřuj Hospodinu celým svým srdcem, na svoji rozumnost nespoléhej.', translation: 'B21', category: 'Moudrost', level: 1, errors: 0 }
+        ];
+
+        // STATE
+        window.appState = {
+            verses: [...DEFAULT_VERSES],
+            lives: 5,
+            streak: 0,
+            xp: 0
+        };
+
+        window.currentUser = null;
+
+        function loadLocalFallback() {
+            useLocalStorageFallback = true;
+            try {
+                const saved = localStorage.getItem('versik_app_state');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && Array.isArray(parsed.verses)) {
+                        window.appState = parsed;
+                    }
+                }
+            } catch (e) {
+                console.warn("LocalStorage fallback failed:", e);
+            }
+            const statusText = document.getElementById('cloud-status-text');
+            if (statusText) statusText.innerText = 'Uloženo lokálně';
+            const userDisplay = document.getElementById('user-id-display');
+            if (userDisplay) userDisplay.innerText = 'Lokální profil';
+            updateStatsUI();
+            renderVerseList();
+            renderProgressOverview();
+        }
+
+        // AUTH INITIALIZATION
+        async function initAuth() {
+            try {
+                let app, auth, db;
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        window.currentUser = user;
+                        const userDisplay = document.getElementById('user-id-display');
+                        if (userDisplay) userDisplay.innerText = user.uid;
+                        
+                        const statusText = document.getElementById('cloud-status-text');
+                        if (statusText) statusText.innerText = 'Cloud Online';
+
+                        await loadUserData(db);
+                    } else {
+                        loadLocalFallback();
+                    }
+                    updateStatsUI();
+                    renderVerseList();
+                    renderProgressOverview();
+                });
+            } catch (err) {
+                console.warn("Firebase not available or iframe blocked, using LocalStorage fallback:", err);
+                loadLocalFallback();
+            }
+        }
+
+        // FIRESTORE SAVE & LOAD
+        window.saveState = async function() {
+            if (useLocalStorageFallback || !window.currentUser) {
+                try {
+                    localStorage.setItem('versik_app_state', JSON.stringify(window.appState));
+                    const statusText = document.getElementById('cloud-status-text');
+                    if (statusText) statusText.innerText = 'Uloženo (Lokálně)';
+                } catch(e) {
+                    console.error("Local save error", e);
+                }
+                return;
+            }
+
+            try {
+                const userDocRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'appData', 'state');
+                await setDoc(userDocRef, window.appState);
+                const statusText = document.getElementById('cloud-status-text');
+                if (statusText) statusText.innerText = 'Uloženo na Cloud';
+            } catch (err) {
+                console.error("Cloud save error, fallback to local:", err);
+                localStorage.setItem('versik_app_state', JSON.stringify(window.appState));
+                const statusText = document.getElementById('cloud-status-text');
+                if (statusText) statusText.innerText = 'Uloženo (Lokálně)';
+            }
+        };
+
+        async function loadUserData(dbInstance) {
+            if (!window.currentUser) return;
+            try {
+                const userDocRef = doc(dbInstance, 'artifacts', appId, 'users', window.currentUser.uid, 'appData', 'state');
+                const docSnap = await getDoc(userDocRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data && Array.isArray(data.verses)) {
+                        window.appState = data;
+                    }
+                } else {
+                    await window.saveState();
+                }
+            } catch (err) {
+                console.error("Cloud load error, falling back to local:", err);
+                loadLocalFallback();
+            }
+        }
+
+        initAuth();
+    </script>
+
+    <!-- JS LOGIKA APLIKACE -->
+    <script>
+        let currentGame = {
+            mode: null,
+            forcedMode: null,
+            verse: null,
+            targetWords: [],
+            selectedWords: [],
+            availableWords: [],
+            blankIndex: -1,
+            blankWord: '',
+            mcOptions: [],
+            mcCorrectIdx: -1,
+            mcSelectedIdx: -1,
+            fadeLevel: 1,
+            isSolo: false,
+            isHeartRefill: false,
+            soloStep: 0,
+            checked: false,
+            sessionStep: 0,
+            sessionTotal: 10,
+            sessionXpGained: 0
+        };
+
+        let currentProgressFilter = 'all';
+
+        function updateStatsUI() {
+            if (!window.appState) return;
+            document.getElementById('stat-lives').innerText = window.appState.lives;
+            document.getElementById('stat-streak').innerText = window.appState.streak;
+            document.getElementById('stat-xp').innerText = window.appState.xp;
+
+            const refillContainer = document.getElementById('refill-lives-container');
+            if (refillContainer) {
+                if (window.appState.lives < 5) {
+                    refillContainer.classList.remove('hidden');
+                } else {
+                    refillContainer.classList.add('hidden');
+                }
+            }
+        }
+
+        // ==================== NAVIGACE ====================
+        function showScreen(screenId) {
+            ['screen-home', 'screen-progress', 'screen-manage', 'screen-game'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+            const target = document.getElementById('screen-' + screenId);
+            if (target) target.classList.remove('hidden');
+
+            if (screenId === 'progress') renderProgressOverview();
+            if (screenId === 'manage') renderVerseList();
+            if (screenId === 'home') updateStatsUI();
+        }
+
+        function closeModal() {
+            document.getElementById('custom-modal').classList.add('hidden');
+        }
+
+        function showModal(message, title = 'Upozornění', iconClass = 'fa-solid fa-circle-info text-duo-blue') {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-message').innerText = message;
+            document.getElementById('modal-icon').className = `text-5xl ${iconClass}`;
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
+
+        function showConfirmModal(message, title, onConfirmAction, confirmText = "Potvrdit", btnClass = "btn-red") {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-message').innerText = message;
+            const confirmBtn = document.getElementById('btn-confirm-action');
+            confirmBtn.innerText = confirmText;
+            confirmBtn.className = `btn-duo ${btnClass} font-extrabold py-3 rounded-2xl text-md`;
+            
+            confirmBtn.onclick = function() {
+                closeConfirmModal();
+                onConfirmAction();
+            };
+
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+        }
+
+        function confirmExitGame() {
+            showConfirmModal(
+                'Opravdu chceš opustit rozehranou hru?', 
+                'Ukončit hru?', 
+                function() { showScreen('home'); },
+                'Opustit hru',
+                'btn-red'
+            );
+        }
+
+        function updateProgressBar() {
+            const pBar = document.getElementById('game-progress-bar');
+            if (!pBar) return;
+            let percent = 0;
+            if (currentGame.isSolo) {
+                percent = Math.round(((currentGame.soloStep + 1) / 3) * 100);
+            } else {
+                percent = Math.round((currentGame.sessionStep / currentGame.sessionTotal) * 100);
+            }
+            pBar.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+        }
+
+        // ==================== LOGIKA TRÉNINKU ====================
+        function startPracticeSession(selectedMode = null) {
+            if (!window.appState.verses || window.appState.verses.length === 0) {
+                showModal('Nemáš žádné uložené verše. Přidej si nějaké v sekci "Moje Verše" nebo nahraj CSV.');
+                return;
+            }
+            if (window.appState.lives <= 0) {
+                showModal('Došly ti životy! Použij tlačítko "Doplnit životy" na hlavní stránce nebo trénuj v přehledu pokroku.', 'Konec životů', 'fa-solid fa-heart-crack text-duo-red');
+                return;
+            }
+
+            currentGame.isSolo = false;
+            currentGame.isHeartRefill = false;
+            currentGame.forcedMode = selectedMode;
+            currentGame.sessionStep = 0;
+            currentGame.sessionTotal = 10;
+            currentGame.sessionXpGained = 0;
+
+            updateProgressBar();
+
+            const sortedVerses = [...window.appState.verses].sort((a, b) => (a.level || 1) - (b.level || 1));
+            const pool = sortedVerses.slice(0, Math.max(2, Math.ceil(sortedVerses.length / 2)));
+            const selectedVerse = pool[Math.floor(Math.random() * pool.length)];
+
+            setupGameRound(selectedVerse, selectedMode);
+            showScreen('game');
+        }
+
+        function startHeartRefillSession() {
+            if (!window.appState.verses || window.appState.verses.length === 0) {
+                showModal('Nemáš žádné uložené verše. Přidej si nějaké v sekci "Moje Verše".');
+                return;
+            }
+            if (window.appState.lives >= 5) {
+                showModal('Máš plný počet životů (5/5)! Nepotřebuješ doplňovat.', 'Plné životy', 'fa-solid fa-heart text-duo-red');
+                return;
+            }
+
+            currentGame.isSolo = false;
+            currentGame.isHeartRefill = true;
+            currentGame.forcedMode = null;
+            currentGame.sessionStep = 0;
+            currentGame.sessionTotal = 5 - window.appState.lives;
+            currentGame.sessionXpGained = 0;
+
+            updateProgressBar();
+
+            const selectedVerse = window.appState.verses[Math.floor(Math.random() * window.appState.verses.length)];
+            setupGameRound(selectedVerse);
+            showScreen('game');
+        }
+
+        function startSoloPractice(verseId) {
+            const verse = window.appState.verses.find(v => String(v.id) === String(verseId));
+            if (!verse) return;
+
+            currentGame.isSolo = true;
+            currentGame.isHeartRefill = false;
+            currentGame.soloStep = 0;
+            currentGame.sessionXpGained = 0;
+
+            updateProgressBar();
+            setupGameRound(verse, 'assemble');
+            showScreen('game');
+        }
+
+        function setupGameRound(verse, forcedMode = null) {
+            currentGame.verse = verse;
+            currentGame.checked = false;
+            
+            document.getElementById('feedback-panel').classList.add('hidden');
+            
+            const modes = ['assemble', 'fill', 'mc', 'fade'];
+            const mode = forcedMode || currentGame.forcedMode || modes[Math.floor(Math.random() * modes.length)];
+            currentGame.mode = mode;
+
+            if (mode === 'mc') {
+                document.getElementById('game-verse-ref').innerText = `??? (${verse.translation || 'B21'})`;
+            } else {
+                document.getElementById('game-verse-ref').innerText = `${verse.reference} (${verse.translation || 'B21'})`;
+            }
+
+            const container = document.getElementById('game-container');
+            container.innerHTML = '';
+
+            const footer = document.getElementById('game-footer');
+            footer.innerHTML = `
+                <button id="btn-check" onclick="checkAnswer()" class="w-full sm:w-auto btn-duo btn-green font-black py-3.5 px-8 rounded-2xl text-lg uppercase tracking-wide">
+                    Zkontrolovat
+                </button>
+            `;
+
+            if (mode === 'assemble') setupAssembleMode(container);
+            else if (mode === 'fill') setupFillMode(container);
+            else if (mode === 'mc') setupMCMode(container);
+            else if (mode === 'fade') setupFadeMode(container, footer);
+        }
+
+        // --- MÓD 1: SKLÁDAČKA ---
+        function setupAssembleMode(container) {
+            document.getElementById('game-mode-title').innerText = '🧩 Poskládej slova verše';
+            currentGame.targetWords = currentGame.verse.text.split(' ');
+            currentGame.selectedWords = [];
+            currentGame.availableWords = shuffle([...currentGame.targetWords]).map((w, idx) => ({ id: idx, word: w }));
+
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <div id="selected-area" class="min-h-[100px] p-4 bg-white border-2 border-dashed border-slate-300 rounded-2xl flex flex-wrap gap-2 items-center align-content-start">
+                        <span class="text-slate-300 font-bold italic w-full text-center">Klikáním na slova níže je slož sem...</span>
+                    </div>
+                    <div id="available-area" class="flex flex-wrap gap-2 justify-center"></div>
+                </div>
+            `;
+            renderAssembleTiles();
+        }
+
+        function renderAssembleTiles() {
+            const selArea = document.getElementById('selected-area');
+            const availArea = document.getElementById('available-area');
+
+            if (currentGame.selectedWords.length === 0) {
+                selArea.innerHTML = `<span class="text-slate-300 font-bold italic w-full text-center">Klikáním na slova níže je slož sem...</span>`;
+            } else {
+                selArea.innerHTML = currentGame.selectedWords.map((item, idx) => `
+                    <button onclick="unselectWord(${idx})" class="word-tile btn-duo btn-gray font-bold px-3 py-2 rounded-xl text-md">
+                        ${item.word}
+                    </button>
+                `).join('');
+            }
+
+            availArea.innerHTML = currentGame.availableWords.map(item => `
+                <button onclick="selectWord(${item.id})" class="word-tile btn-duo btn-blue font-bold px-3 py-2 rounded-xl text-md">
+                    ${item.word}
+                </button>
+            `).join('');
+        }
+
+        function selectWord(id) {
+            if (currentGame.checked) return;
+            const idx = currentGame.availableWords.findIndex(w => w.id === id);
+            if (idx > -1) {
+                const item = currentGame.availableWords.splice(idx, 1)[0];
+                currentGame.selectedWords.push(item);
+                renderAssembleTiles();
+            }
+        }
+
+        function unselectWord(idx) {
+            if (currentGame.checked) return;
+            const item = currentGame.selectedWords.splice(idx, 1)[0];
+            currentGame.availableWords.push(item);
+            renderAssembleTiles();
+        }
+
+        // --- MÓD 2: DOPLŇOVAČKA ---
+        function setupFillMode(container) {
+            document.getElementById('game-mode-title').innerText = '✍️ Doplň chybějící slovo';
+            const words = currentGame.verse.text.split(' ');
+            currentGame.blankIndex = Math.floor(Math.random() * words.length);
+            currentGame.blankWord = words[currentGame.blankIndex];
+
+            const textWithBlank = words.map((w, i) => i === currentGame.blankIndex ? '___' : w).join(' ');
+
+            container.innerHTML = `
+                <div class="bg-white border-2 border-slate-200 rounded-3xl p-6 space-y-4">
+                    <p class="text-xl font-bold leading-relaxed text-slate-700">${textWithBlank}</p>
+                    <input type="text" id="fill-input" placeholder="Napiš chybějící slovo..." class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 text-lg font-bold focus:border-duo-green focus:outline-none">
+                </div>
+            `;
+        }
+
+        // --- MÓD 3: KVÍZ ODKAZŮ ---
+        function setupMCMode(container) {
+            document.getElementById('game-mode-title').innerText = '❓ Vyber správný odkaz verše';
+            
+            let otherVerses = window.appState.verses.filter(v => String(v.id) !== String(currentGame.verse.id));
+            otherVerses = shuffle(otherVerses);
+            
+            const options = [currentGame.verse];
+            for (let i = 0; i < Math.min(3, otherVerses.length); i++) {
+                options.push(otherVerses[i]);
+            }
+            currentGame.mcOptions = shuffle(options);
+            currentGame.mcCorrectIdx = currentGame.mcOptions.findIndex(v => String(v.id) === String(currentGame.verse.id));
+            currentGame.mcSelectedIdx = -1;
+
+            container.innerHTML = `
+                <div class="space-y-4">
+                    <div class="bg-white border-2 border-slate-200 rounded-3xl p-6 text-xl font-bold text-slate-700 leading-relaxed shadow-sm">
+                        "${currentGame.verse.text}"
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="mc-options-grid">
+                        ${currentGame.mcOptions.map((opt, i) => `
+                            <button onclick="selectMCOption(${i})" id="mc-opt-${i}" class="btn-duo btn-gray p-4 rounded-2xl text-left font-black text-md">
+                                ${opt.reference} (${opt.translation || 'B21'})
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectMCOption(idx) {
+            if (currentGame.checked) return;
+            currentGame.mcSelectedIdx = idx;
+            document.querySelectorAll('#mc-options-grid button').forEach((btn, i) => {
+                btn.className = i === idx ? 'btn-duo btn-blue p-4 rounded-2xl text-left font-black text-md' : 'btn-duo btn-gray p-4 rounded-2xl text-left font-black text-md';
+            });
+        }
+
+        // --- MÓD 4: MIZEJÍCÍ TEXT ---
+        function setupFadeMode(container, footer) {
+            document.getElementById('game-mode-title').innerText = '👁️ Zapamatuj si a ověř text';
+            currentGame.fadeLevel = Math.floor(Math.random() * 2) + 1;
+
+            const words = currentGame.verse.text.split(' ');
+            const hiddenText = words.map((w, i) => (i % (currentGame.fadeLevel + 1) === 0) ? '___' : w).join(' ');
+
+            container.innerHTML = `
+                <div class="bg-white border-2 border-slate-200 rounded-3xl p-6 space-y-4 text-center">
+                    <p class="text-xl font-bold leading-relaxed text-slate-700">${hiddenText}</p>
+                    <p class="text-xs font-bold text-slate-400">Řekni si verš v duchu nebo nahlas a pak klikni na tlačítko níže.</p>
+                </div>
+            `;
+
+            footer.innerHTML = `
+                <div class="w-full grid grid-cols-2 gap-3">
+                    <button onclick="revealFadeMode(false)" class="btn-duo btn-red font-black py-3.5 rounded-2xl text-md uppercase">
+                        <i class="fa-solid fa-xmark mr-1"></i> Nevím
+                    </button>
+                    <button onclick="revealFadeMode(true)" class="btn-duo btn-green font-black py-3.5 rounded-2xl text-md uppercase">
+                        <i class="fa-solid fa-eye mr-1"></i> Vím (Zkontrolovat)
+                    </button>
+                </div>
+            `;
+        }
+
+        function revealFadeMode(userClaimedKnew) {
+            const container = document.getElementById('game-container');
+            container.innerHTML = `
+                <div class="bg-white border-2 border-slate-200 rounded-3xl p-6 space-y-3 text-center">
+                    <div class="text-xs font-black text-slate-400 uppercase tracking-wider">Kompletní znění verše:</div>
+                    <p class="text-xl font-bold leading-relaxed text-slate-800 bg-slate-50 p-4 rounded-2xl border border-slate-200">"${currentGame.verse.text}"</p>
+                    <p class="text-sm font-bold text-duo-blue">Měl/a jsi znění v paměti přesně správně?</p>
+                </div>
+            `;
+
+            const footer = document.getElementById('game-footer');
+            if (userClaimedKnew) {
+                footer.innerHTML = `
+                    <div class="w-full grid grid-cols-2 gap-3">
+                        <button onclick="evaluateFadeMode(false)" class="btn-duo btn-red font-black py-3.5 rounded-2xl text-md uppercase">
+                            <i class="fa-solid fa-xmark mr-1"></i> Ne, byla tam chyba
+                        </button>
+                        <button onclick="evaluateFadeMode(true)" class="btn-duo btn-green font-black py-3.5 rounded-2xl text-md uppercase">
+                            <i class="fa-solid fa-check mr-1"></i> Ano, přesně správně
+                        </button>
+                    </div>
+                `;
+            } else {
+                evaluateFadeMode(false);
+            }
+        }
+
+        function evaluateFadeMode(userKnew) {
+            if (currentGame.checked) return;
+
+            const footer = document.getElementById('game-footer');
+            footer.innerHTML = `
+                <button id="btn-check" onclick="checkAnswer()" class="w-full sm:w-auto btn-duo btn-blue font-black py-3.5 px-8 rounded-2xl text-lg uppercase tracking-wide">
+                    Pokračovat
+                </button>
+            `;
+
+            finishAnswer(userKnew, userKnew ? "Skvěle! Verš ovládáš správně." : "Verš je potřeba ještě více procvičit.");
+        }
+
+        // ==================== KONTROLA ODPOVĚDÍ ====================
+        function checkAnswer() {
+            if (currentGame.checked) {
+                if (currentGame.isSolo) {
+                    currentGame.soloStep++;
+                    updateProgressBar();
+                    const modes = ['assemble', 'fill', 'mc'];
+                    if (currentGame.soloStep < modes.length) {
+                        setupGameRound(currentGame.verse, modes[currentGame.soloStep]);
+                    } else {
+                        showModal('Skvělé! Dokončil/a jsi kompletní samostatný trénink tohoto verše.', 'Trénink Dokončen!', 'fa-solid fa-award text-duo-yellow');
+                        showScreen('progress');
+                    }
+                } else if (currentGame.isHeartRefill) {
+                    if (window.appState.lives >= 5) {
+                        confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
+                        showModal('Skvěle! Doplnil/a jsi všechny své životy na 5/5 ❤️!', 'Životy Doplněny!', 'fa-solid fa-heart text-duo-red');
+                        showScreen('home');
+                    } else {
+                        const selectedVerse = window.appState.verses[Math.floor(Math.random() * window.appState.verses.length)];
+                        setupGameRound(selectedVerse);
+                    }
+                } else {
+                    currentGame.sessionStep++;
+                    updateProgressBar();
+
+                    if (currentGame.sessionStep >= currentGame.sessionTotal) {
+                        confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
+                        showModal(`Gratulujeme! Dokončil/a jsi trénink 10 veršů a získal/a ${currentGame.sessionXpGained} XP!`, 'Série Dokončena! 🎉', 'fa-solid fa-trophy text-duo-yellow');
+                        showScreen('home');
+                    } else {
+                        const sortedVerses = [...window.appState.verses].sort((a, b) => (a.level || 1) - (b.level || 1));
+                        const pool = sortedVerses.slice(0, Math.max(2, Math.ceil(sortedVerses.length / 2)));
+                        const selectedVerse = pool[Math.floor(Math.random() * pool.length)];
+                        setupGameRound(selectedVerse, currentGame.forcedMode);
+                    }
+                }
+                return;
+            }
+
+            let isCorrect = false;
+            let detailsHtml = '';
+
+            if (currentGame.mode === 'assemble') {
+                const userText = currentGame.selectedWords.map(w => w.word).join(' ');
+                isCorrect = cleanWord(userText) === cleanWord(currentGame.verse.text);
+
+                const target = currentGame.targetWords;
+                const user = currentGame.selectedWords;
+                detailsHtml = '<div class="flex flex-wrap gap-1 mt-2">';
+                target.forEach((tw, i) => {
+                    const uw = user[i] ? user[i].word : '';
+                    if (cleanWord(tw) === cleanWord(uw)) {
+                        detailsHtml += `<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-1 rounded">${tw}</span>`;
+                    } else if (uw) {
+                        detailsHtml += `<span class="bg-rose-100 text-rose-800 line-through font-bold px-2 py-1 rounded">${uw}</span> <span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-1 rounded">${tw}</span>`;
+                    } else {
+                        detailsHtml += `<span class="bg-slate-100 text-slate-400 font-bold px-2 py-1 rounded">${tw}</span>`;
+                    }
+                });
+                detailsHtml += '</div>';
+
+            } else if (currentGame.mode === 'fill') {
+                const inputVal = (document.getElementById('fill-input').value || '').trim();
+                isCorrect = cleanWord(inputVal) === cleanWord(currentGame.blankWord);
+                detailsHtml = isCorrect 
+                    ? `Správně doplněno: <b>${currentGame.blankWord}</b>`
+                    : `Napsáno: <span class="line-through text-duo-red">${inputVal || '(nic)'}</span> | Správně: <b class="text-duo-green">${currentGame.blankWord}</b>`;
+
+            } else if (currentGame.mode === 'mc') {
+                if (currentGame.mcSelectedIdx === -1) {
+                    showModal('Vyber prosím jednu z možností.');
+                    return;
+                }
+                isCorrect = currentGame.mcSelectedIdx === currentGame.mcCorrectIdx;
+                detailsHtml = `Správný odkaz pro tento verš je <b>${currentGame.verse.reference} (${currentGame.verse.translation || 'B21'})</b>`;
+                
+                document.querySelectorAll('#mc-options-grid button').forEach((btn, i) => {
+                    if (i === currentGame.mcCorrectIdx) btn.className = 'btn-duo btn-green p-4 rounded-2xl text-left font-black text-md';
+                    else if (i === currentGame.mcSelectedIdx && !isCorrect) btn.className = 'btn-duo btn-red p-4 rounded-2xl text-left font-black text-md';
+                });
+            }
+
+            finishAnswer(isCorrect, detailsHtml);
+        }
+
+        function finishAnswer(isCorrect, detailsHtml) {
+            currentGame.checked = true;
+            const panel = document.getElementById('feedback-panel');
+            const title = document.getElementById('feedback-title');
+            const details = document.getElementById('feedback-details');
+            const btnCheck = document.getElementById('btn-check');
+
+            panel.classList.remove('hidden');
+
+            if (isCorrect) {
+                panel.className = 'rounded-3xl p-5 border-2 border-emerald-300 bg-emerald-50 text-emerald-900 space-y-2';
+                title.innerHTML = '<i class="fa-solid fa-circle-check text-duo-green"></i> Skvěle! Správná odpověď';
+                details.innerHTML = detailsHtml;
+                
+                window.appState.xp += 10;
+                currentGame.sessionXpGained += 10;
+                currentGame.verse.level = Math.min(5, (currentGame.verse.level || 1) + 1);
+
+                if (currentGame.isHeartRefill) {
+                    window.appState.lives = Math.min(5, window.appState.lives + 1);
+                }
+
+                confetti({ particleCount: 40, spread: 60, origin: { y: 0.8 } });
+            } else {
+                panel.className = 'rounded-3xl p-5 border-2 border-rose-300 bg-rose-50 text-rose-900 space-y-2';
+                title.innerHTML = '<i class="fa-solid fa-circle-xmark text-duo-red"></i> Vedle! Zkus to znovu';
+                details.innerHTML = detailsHtml;
+
+                if (!currentGame.isHeartRefill) {
+                    window.appState.lives = Math.max(0, window.appState.lives - 1);
+                }
+                currentGame.verse.errors = (currentGame.verse.errors || 0) + 1;
+                currentGame.verse.level = Math.max(1, (currentGame.verse.level || 1) - 1);
+            }
+
+            if (typeof window.saveState === 'function') window.saveState();
+            updateStatsUI();
+
+            if (btnCheck) {
+                btnCheck.innerText = 'Pokračovat';
+                btnCheck.className = 'w-full sm:w-auto btn-duo btn-blue font-black py-3.5 px-8 rounded-2xl text-lg uppercase tracking-wide';
+            }
+        }
+
+        // ==================== POMOCNÉ FUNKCE ====================
+        function cleanWord(w) {
+            return w.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()"?]/g, "").trim();
+        }
+
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            let newArr = [...array];
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [newArr[currentIndex], newArr[randomIndex]] = [newArr[randomIndex], newArr[currentIndex]];
+            }
+            return newArr;
+        }
+
+        // ==================== PŘEHLEDKY POKROKU ====================
+        function renderProgressOverview() {
+            const listContainer = document.getElementById('progress-list');
+            if (!listContainer || !window.appState) return;
+
+            let total = window.appState.verses.length;
+            let learning = 0;
+            let mastered = 0;
+
+            window.appState.verses.forEach(v => {
+                if ((v.level || 1) >= 5) mastered++;
+                else if ((v.level || 1) > 1 || (v.errors || 0) > 0) learning++;
+            });
+
+            document.getElementById('prog-total').innerText = total;
+            document.getElementById('prog-learning').innerText = learning;
+            document.getElementById('prog-mastered').innerText = mastered;
+
+            let filtered = window.appState.verses.filter(v => {
+                const lvl = v.level || 1;
+                if (currentProgressFilter === 'new') return lvl === 1 && (!v.errors || v.errors === 0);
+                if (currentProgressFilter === 'learning') return lvl < 5 && (lvl > 1 || (v.errors && v.errors > 0));
+                if (currentProgressFilter === 'mastered') return lvl >= 5;
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = `<div class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-center text-slate-400 font-bold">Žádné verše v této kategorii.</div>`;
+                return;
+            }
+
+            listContainer.innerHTML = filtered.map(v => {
+                const lvl = v.level || 1;
+                const percent = Math.min(100, Math.round((lvl / 5) * 100));
+                return `
+                    <div class="bg-white border-2 border-slate-200 rounded-2xl p-4 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="font-black text-slate-800 text-lg">${v.reference}</span>
+                                <span class="text-xs font-bold text-slate-400 ml-1">(${v.translation || 'B21'})</span>
+                                ${v.category ? `<span class="ml-2 text-xs font-extrabold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">${v.category}</span>` : ''}
+                            </div>
+                            <button onclick="startSoloPractice('${v.id}')" class="btn-duo btn-blue text-xs font-black py-1.5 px-3 rounded-xl flex items-center gap-1">
+                                <i class="fa-solid fa-crosshairs"></i> Procvičit
+                            </button>
+                        </div>
+                        <p class="text-sm text-slate-600 font-bold leading-relaxed">"${v.text}"</p>
+                        <div class="space-y-1 pt-1">
+                            <div class="flex justify-between text-xs font-bold text-slate-400">
+                                <span>Úroveň naučení: ${lvl}/5</span>
+                                <span>${percent}%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                                <div class="bg-duo-green h-full rounded-full transition-all duration-300" style="width: ${percent}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterProgress(filter) {
+            currentProgressFilter = filter;
+            ['all', 'new', 'learning', 'mastered'].forEach(f => {
+                const btn = document.getElementById(`filter-btn-${f}`);
+                if (btn) {
+                    if (f === filter) btn.className = 'px-4 py-2 rounded-xl font-bold text-sm bg-slate-800 text-white border-2 border-slate-800';
+                    else btn.className = 'px-4 py-2 rounded-xl font-bold text-sm bg-white text-slate-600 border-2 border-slate-200';
+                }
+            });
+            renderProgressOverview();
+        }
+
+        // ==================== SPRÁVA & ÚPRAVA VERŠŮ ====================
+        function renderVerseList() {
+            const container = document.getElementById('verses-list');
+            if (!container || !window.appState) return;
+
+            if (!window.appState.verses || window.appState.verses.length === 0) {
+                container.innerHTML = `<div class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-center text-slate-400 font-bold">Nemáš žádné verše. Přidej první výše nebo použij tlačítko Import CSV!</div>`;
+                return;
+            }
+
+            container.innerHTML = window.appState.verses.map(v => `
+                <div class="bg-white border-2 border-slate-200 rounded-2xl p-4 flex justify-between items-start gap-3">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-black text-slate-800 text-md">${v.reference}</span>
+                            <span class="text-xs font-bold text-slate-400">(${v.translation || 'B21'})</span>
+                            ${v.category ? `<span class="text-xs font-extrabold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">${v.category}</span>` : ''}
+                        </div>
+                        <p class="text-sm font-bold text-slate-600 leading-relaxed">"${v.text}"</p>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button onclick="editVerse('${v.id}')" title="Upravit verš" class="text-slate-400 hover:text-duo-blue p-2 transition-colors">
+                            <i class="fa-solid fa-pen-to-square text-lg"></i>
+                        </button>
+                        <button onclick="deleteVerse('${v.id}')" title="Smazat verš" class="text-slate-400 hover:text-duo-red p-2 transition-colors">
+                            <i class="fa-solid fa-trash-can text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function saveVerseFromForm() {
+            const editId = document.getElementById('input-edit-id').value;
+            const ref = document.getElementById('input-ref').value.trim();
+            const text = document.getElementById('input-text').value.trim();
+            const translation = document.getElementById('input-translation').value.trim() || 'B21';
+            const category = document.getElementById('input-category').value.trim();
+
+            if (!ref || !text) {
+                showModal('Vyplň prosím odkaz i znění verše.');
+                return;
+            }
+
+            if (editId) {
+                const verse = window.appState.verses.find(v => String(v.id) === String(editId));
+                if (verse) {
+                    verse.reference = ref;
+                    verse.text = text;
+                    verse.translation = translation;
+                    verse.category = category;
+                }
+                showModal('Verš byl úspěšně upraven!', 'Uloženo', 'fa-solid fa-circle-check text-duo-green');
+            } else {
+                const newVerse = {
+                    id: 'v_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                    reference: ref,
+                    text: text,
+                    translation: translation,
+                    category: category,
+                    level: 1,
+                    errors: 0
+                };
+                window.appState.verses.push(newVerse);
+                showModal('Verš byl úspěšně přidán!', 'Uloženo', 'fa-solid fa-circle-check text-duo-green');
+            }
+
+            if (typeof window.saveState === 'function') window.saveState();
+            resetVerseForm();
+            renderVerseList();
+        }
+
+        function editVerse(id) {
+            const verse = window.appState.verses.find(v => String(v.id) === String(id));
+            if (!verse) return;
+
+            document.getElementById('input-edit-id').value = verse.id;
+            document.getElementById('input-ref').value = verse.reference || '';
+            document.getElementById('input-text').value = verse.text || '';
+            document.getElementById('input-translation').value = verse.translation || 'B21';
+            document.getElementById('input-category').value = verse.category || '';
+
+            document.getElementById('form-verse-title').innerHTML = `<i class="fa-solid fa-pen-to-square text-duo-blue"></i> Upravit verš`;
+            document.getElementById('btn-save-verse').innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Aktualizovat verš`;
+            document.getElementById('btn-cancel-edit').classList.remove('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetVerseForm() {
+            document.getElementById('input-edit-id').value = '';
+            document.getElementById('input-ref').value = '';
+            document.getElementById('input-text').value = '';
+            document.getElementById('input-translation').value = '';
+            document.getElementById('input-category').value = '';
+
+            document.getElementById('form-verse-title').innerHTML = `<i class="fa-solid fa-plus-circle text-duo-green"></i> Přidat nový verš`;
+            document.getElementById('btn-save-verse').innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Uložit verš`;
+            document.getElementById('btn-cancel-edit').classList.add('hidden');
+        }
+
+        function deleteVerse(id) {
+            const verse = window.appState.verses.find(v => String(v.id) === String(id));
+            const verseRef = verse ? verse.reference : 'tento verš';
+            
+            showConfirmModal(
+                `Opravdu chceš smazat ${verseRef}?`,
+                'Smazat verš?',
+                function() {
+                    window.appState.verses = window.appState.verses.filter(v => String(v.id) !== String(id));
+                    if (typeof window.saveState === 'function') window.saveState();
+                    renderVerseList();
+                    renderProgressOverview();
+                    showModal('Verš byl úspěšně smazán.', 'Smazáno', 'fa-solid fa-trash-can text-duo-red');
+                },
+                'Smazat',
+                'btn-red'
+            );
+        }
+
+        // ==================== CSV IMPORT A EXPORT ====================
+        function handleCSVImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                parseAndImportCSV(content);
+                event.target.value = '';
+            };
+            
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        function parseAndImportCSV(csvText) {
+            if (!csvText || !csvText.trim()) {
+                showModal('Vybraný soubor je prázdný.');
+                return;
+            }
+
+            const lines = csvText.split(/\r\n|\n|\r/);
+            let importedCount = 0;
+
+            lines.forEach((line) => {
+                const trimmed = line.trim();
+                if (!trimmed) return;
+
+                let sep = ';';
+                if (!trimmed.includes(';') && trimmed.includes('\t')) sep = '\t';
+                else if (!trimmed.includes(';') && trimmed.includes(',')) sep = ',';
+
+                let parts = parseCSVLine(trimmed, sep);
+
+                if (parts.length >= 2) {
+                    let ref = parts[0] ? parts[0].trim() : '';
+                    let text = parts[1] ? parts[1].trim() : '';
+                    let trans = parts[2] ? parts[2].trim() : 'B21';
+                    let cat = parts[3] ? parts[3].trim() : '';
+
+                    ref = ref.replace(/^["']|["']$/g, '').trim();
+                    text = text.replace(/^["']|["']$/g, '').trim();
+                    trans = trans.replace(/^["']|["']$/g, '').trim();
+                    cat = cat.replace(/^["']|["']$/g, '').trim();
+
+                    const lowRef = ref.toLowerCase();
+                    if (lowRef === 'reference' || lowRef === 'odkaz' || lowRef === 'ref') return;
+
+                    if (ref && text) {
+                        window.appState.verses.push({
+                            id: 'v_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                            reference: ref,
+                            text: text,
+                            translation: trans || 'B21',
+                            category: cat || '',
+                            level: 1,
+                            errors: 0
+                        });
+                        importedCount++;
+                    }
+                }
+            });
+
+            if (importedCount > 0) {
+                if (typeof window.saveState === 'function') window.saveState();
+                renderVerseList();
+                renderProgressOverview();
+                showModal(`Úspěšně importováno ${importedCount} veršů!`, 'Import Dokončen', 'fa-solid fa-file-circle-check text-duo-green');
+            } else {
+                showModal('Nepodařilo se načíst žádné verše. Zkontrolujte formát souboru (požadováno: Reference;Text;Překlad;Kategorie).', 'Chyba Importu', 'fa-solid fa-triangle-exclamation text-duo-red');
+            }
+        }
+
+        function parseCSVLine(text, separator) {
+            let result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < text.length; i++) {
+                let char = text[i];
+                if (char === '"') {
+                    if (inQuotes && text[i + 1] === '"') {
+                        current += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === separator && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current);
+            return result;
+        }
+
+        function exportToCSV() {
+            if (!window.appState.verses || window.appState.verses.length === 0) {
+                showModal('Nemáš žádné verše k exportu.');
+                return;
+            }
+
+            let csvContent = "Reference;Text;Překlad;Kategorie\n";
+            window.appState.verses.forEach(v => {
+                const ref = `"${(v.reference || '').replace(/"/g, '""')}"`;
+                const text = `"${(v.text || '').replace(/"/g, '""')}"`;
+                const trans = `"${(v.translation || 'B21').replace(/"/g, '""')}"`;
+                const cat = `"${(v.category || '').replace(/"/g, '""')}"`;
+                csvContent += `${ref};${text};${trans};${cat}\n`;
+            });
+
+            const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'krepinskym_2.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
