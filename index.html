@@ -61,7 +61,7 @@
         }
         .btn-yellow {
             background-color: #ffc800;
-            box-shadow: 0 4px 0 #e5e5e5;
+            box-shadow: 0 4px 0 #e5b200;
             color: white;
         }
         .btn-red {
@@ -98,7 +98,7 @@
         </div>
     </div>
 
-    <!-- POTVRZOVACÍ MODAL (PRO MAZÁNÍ A UKONČENÍ HRY) -->
+    <!-- POTVRZOVACÍ MODAL -->
     <div id="confirm-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border-4 border-slate-200 text-center space-y-4">
             <div id="confirm-icon" class="text-5xl text-duo-yellow">
@@ -117,7 +117,45 @@
         </div>
     </div>
 
-    <!-- HLAVNÍ NAVIGACE (HORNÍ LIŠTA) -->
+    <!-- AUTH MODAL (PŘIHLÁŠENÍ / REGISTRACE) -->
+    <div id="auth-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border-4 border-slate-200 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 id="auth-modal-title" class="text-xl font-black text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-user-check text-duo-green"></i> Přihlášení k účtu
+                </h3>
+                <button onclick="closeAuthModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-black">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <p class="text-xs font-bold text-slate-500">
+                Přihlaste se nebo si vytvořte účet, abyste se k svým veršům mohl/a přihlašovat z **jakéhokoliv zařízení** (telefon, počítač).
+            </p>
+
+            <form onsubmit="handleAuthSubmit(event)" class="space-y-3 pt-2">
+                <div>
+                    <label class="block text-xs font-black text-slate-600 uppercase mb-1">E-mail</label>
+                    <input type="email" id="auth-email" required placeholder="vas@email.cz" class="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 font-bold focus:border-duo-green focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-slate-600 uppercase mb-1">Heslo</label>
+                    <input type="password" id="auth-password" required minlength="6" placeholder="Minimálně 6 znaků" class="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 font-bold focus:border-duo-green focus:outline-none">
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="submit" id="btn-auth-submit" onclick="window.authMode='login'" class="flex-1 btn-duo btn-green font-black py-3 rounded-xl text-md">
+                        Přihlásit se
+                    </button>
+                    <button type="submit" id="btn-auth-register" onclick="window.authMode='register'" class="flex-1 btn-duo btn-blue font-black py-3 rounded-xl text-md">
+                        Vytvořit účet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- HLAVNÍ NAVIGACE -->
     <header class="bg-white border-b-2 border-slate-200 sticky top-0 z-40">
         <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
             <div onclick="showScreen('home')" class="cursor-pointer flex items-center gap-2">
@@ -125,7 +163,7 @@
                 <span class="text-2xl font-black tracking-wider text-duo-green">VERŠÍK</span>
             </div>
             
-            <!-- STAVY (Srdíčka, Streak, XP & Cloud Status) -->
+            <!-- STAVY -->
             <div class="flex items-center gap-3 font-black text-lg">
                 <div class="flex items-center gap-1 text-duo-red" title="Životy">
                     <i class="fa-solid fa-heart text-xl"></i>
@@ -139,7 +177,6 @@
                     <i class="fa-solid fa-bolt text-xl"></i>
                     <span id="stat-xp">0</span>
                 </div>
-                <!-- Cloud sync indicator -->
                 <div id="cloud-status" class="text-xs px-2 py-1 bg-slate-100 rounded-lg text-slate-500 font-bold flex items-center gap-1" title="Stav Cloudu">
                     <i class="fa-solid fa-cloud-arrow-up text-duo-blue"></i>
                     <span id="cloud-status-text">Připojování...</span>
@@ -155,14 +192,13 @@
         <section id="screen-home" class="space-y-6">
             <div class="bg-white border-2 border-slate-200 rounded-3xl p-6 text-center space-y-4 shadow-sm">
                 <h1 class="text-2xl sm:text-3xl font-black text-slate-800">Procvičuj Biblické Verše</h1>
-                <p class="text-slate-500 font-bold">Uč se verše hravě s uložením v cloudu!</p>
+                <p class="text-slate-500 font-bold">Uč se verše hravě s synchronizací v cloudu!</p>
                 
                 <div class="pt-2 space-y-3">
                     <button onclick="startPracticeSession()" class="w-full btn-duo btn-green font-black py-4 rounded-2xl text-xl tracking-wide uppercase">
                         <i class="fa-solid fa-play mr-2"></i> Náhodný Trénink (10 Veršů)
                     </button>
                     
-                    <!-- TLAČÍTKO DOPLNIT ŽIVOTY -->
                     <div id="refill-lives-container" class="hidden">
                         <button onclick="startHeartRefillSession()" class="w-full btn-duo btn-red font-black py-3.5 rounded-2xl text-lg tracking-wide uppercase flex items-center justify-center gap-2">
                             <i class="fa-solid fa-heart-pulse text-2xl animate-pulse"></i> Doplnit Životy (Trénink zdarma)
@@ -171,7 +207,7 @@
                 </div>
             </div>
 
-            <!-- VÝBĚR KONKRÉTNÍHO HERNÍHO MÓDU -->
+            <!-- MÓDY -->
             <div class="space-y-3">
                 <h2 class="text-lg font-black text-slate-700 px-1">Vyber si konkrétní hru:</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -217,7 +253,7 @@
                 </div>
             </div>
 
-            <!-- DALŠÍ SEKTORY -->
+            <!-- NAVIGATION BUTTONS -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                 <button onclick="showScreen('progress')" class="bg-white border-2 border-slate-200 p-5 rounded-3xl text-left hover:border-duo-blue transition-all group flex items-center justify-between shadow-sm">
                     <div>
@@ -240,14 +276,19 @@
                 </button>
             </div>
 
-            <!-- USER INFO BOX -->
-            <div id="user-info-bar" class="p-4 bg-slate-100 rounded-2xl border border-slate-200 text-xs font-bold text-slate-500 flex justify-between items-center">
-                <span>Účet: <span id="user-id-display" class="font-mono text-slate-700">Načítání...</span></span>
-                <span class="text-duo-green flex items-center gap-1"><i class="fa-solid fa-shield-halved"></i> Cloud Zabezpečeno</span>
+            <!-- USER ACCOUNT BAR -->
+            <div id="user-info-bar" class="p-4 bg-slate-100 rounded-2xl border border-slate-200 text-xs font-bold text-slate-600 flex justify-between items-center flex-wrap gap-2">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-user-circle text-lg text-duo-blue"></i>
+                    <span>Účet: <span id="user-id-display" class="font-mono text-slate-800">Načítání...</span></span>
+                </div>
+                <button onclick="openAuthModal()" id="btn-login-header" class="text-duo-blue font-black hover:underline flex items-center gap-1">
+                    <i class="fa-solid fa-right-to-bracket"></i> Přihlásit se / Změnit účet
+                </button>
             </div>
         </section>
 
-        <!-- ==================== OBRAZOVKA PŘEHLEDU POKROKU ==================== -->
+        <!-- ==================== OBRAZOVKA POKROKU ==================== -->
         <section id="screen-progress" class="hidden space-y-6">
             <div class="flex items-center justify-between">
                 <button onclick="showScreen('home')" class="text-slate-500 hover:text-slate-700 font-bold flex items-center gap-2">
@@ -256,7 +297,6 @@
                 <h2 class="text-xl font-black text-slate-800">Přehled Pokroku</h2>
             </div>
 
-            <!-- Statistiky karty -->
             <div class="grid grid-cols-3 gap-3 text-center">
                 <div class="bg-white border-2 border-slate-200 p-3 rounded-2xl">
                     <div id="prog-total" class="text-2xl font-black text-slate-800">0</div>
@@ -272,7 +312,6 @@
                 </div>
             </div>
 
-            <!-- Filtry -->
             <div class="flex gap-2 overflow-x-auto pb-1">
                 <button onclick="filterProgress('all')" id="filter-btn-all" class="px-4 py-2 rounded-xl font-bold text-sm bg-slate-800 text-white border-2 border-slate-800">Všechny</button>
                 <button onclick="filterProgress('new')" id="filter-btn-new" class="px-4 py-2 rounded-xl font-bold text-sm bg-white text-slate-600 border-2 border-slate-200">Nezkoušeno</button>
@@ -283,7 +322,7 @@
             <div id="progress-list" class="space-y-3"></div>
         </section>
 
-        <!-- ==================== OBRAZOVKA SPRÁVY VERŠŮ ==================== -->
+        <!-- ==================== OBRAZOVKA SPRÁVY ==================== -->
         <section id="screen-manage" class="hidden space-y-6">
             <div class="flex items-center justify-between">
                 <button onclick="showScreen('home')" class="text-slate-500 hover:text-slate-700 font-bold flex items-center gap-2">
@@ -292,7 +331,6 @@
                 <h2 class="text-xl font-black text-slate-800">Moje Verše</h2>
             </div>
 
-            <!-- Formulář & CSV Tlačítka -->
             <div class="bg-white border-2 border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
                 <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-slate-100 pb-3">
                     <h3 id="form-verse-title" class="font-black text-slate-700 text-md flex items-center gap-2">
@@ -310,7 +348,6 @@
                     </div>
                 </div>
 
-                <!-- Hidden ID for edit mode -->
                 <input type="hidden" id="input-edit-id" value="">
 
                 <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -330,13 +367,11 @@
                 </div>
             </div>
 
-            <!-- Seznam Veršů ke správě -->
             <div class="space-y-3" id="verses-list"></div>
         </section>
 
         <!-- ==================== HERNÍ OBRAZOVKA ==================== -->
         <section id="screen-game" class="hidden space-y-6">
-            <!-- Herní Hlavička -->
             <div class="flex items-center justify-between gap-4">
                 <button onclick="confirmExitGame()" class="text-slate-400 hover:text-slate-600 font-black text-2xl p-2 rounded-xl hover:bg-slate-100 transition-colors">
                     <i class="fa-solid fa-xmark"></i>
@@ -346,22 +381,18 @@
                 </div>
             </div>
 
-            <!-- Odkaz verše a mód -->
             <div class="text-center space-y-1">
                 <div id="game-verse-ref" class="text-2xl font-black text-slate-800"></div>
                 <div id="game-mode-title" class="text-sm font-bold text-duo-blue uppercase tracking-wider"></div>
             </div>
 
-            <!-- Herní kontejner -->
             <div id="game-container" class="min-h-[220px] flex flex-col justify-center"></div>
 
-            <!-- Vyhodnocení (Zobrazení chyb) -->
             <div id="feedback-panel" class="hidden rounded-3xl p-5 border-2 space-y-3">
                 <div class="flex items-center gap-3 font-black text-xl" id="feedback-title"></div>
                 <div id="feedback-details" class="text-sm font-bold leading-relaxed"></div>
             </div>
 
-            <!-- Patka hry s tlačítkem dál/kontrola -->
             <div id="game-footer" class="pt-4 border-t-2 border-slate-100 flex justify-end">
                 <button id="btn-check" onclick="checkAnswer()" class="w-full sm:w-auto btn-duo btn-green font-black py-3.5 px-8 rounded-2xl text-lg uppercase tracking-wide">
                     Zkontrolovat
@@ -374,13 +405,11 @@
     <!-- FIREBASE MODULES -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // APP CONFIG & GLOBALS
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'versik-app';
         
-        // Sem vložte vaše údaje z Firebase Console -> Project Settings -> General -> Your apps
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyCkn2Vql-vU8spBcYOI_HrvAG3xrwTmv2Q",
             authDomain: "versik-app.firebaseapp.com",
@@ -390,9 +419,9 @@
             appId: "1:887636407725:web:2cfab574adffce76265d24"
         };
 
-        let useLocalStorageFallback = false;
+        let db = null;
+        let auth = null;
 
-        // DEFAULT VERSES
         const DEFAULT_VERSES = [
             { id: 'v1', reference: 'Jan 3:16', text: 'Neboť Bůh tak miloval svět, že dal svého jediného Syna, aby žádný, kdo v něho věří, nezahynul, ale měl život věčný.', translation: 'B21', category: 'Spása', level: 1, errors: 0 },
             { id: 'v2', reference: 'Žalm 23:1', text: 'Hospodin je můj pastýř, nebudu mít nedostatek.', translation: 'CEP', category: 'Důvěra', level: 1, errors: 0 },
@@ -400,7 +429,6 @@
             { id: 'v4', reference: 'Přísloví 3:5', text: 'Důvěřuj Hospodinu celým svým srdcem, na svoji rozumnost nespoléhej.', translation: 'B21', category: 'Moudrost', level: 1, errors: 0 }
         ];
 
-        // STATE
         window.appState = {
             verses: [...DEFAULT_VERSES],
             lives: 5,
@@ -410,75 +438,56 @@
 
         window.currentUser = null;
 
-        function loadLocalFallback() {
-            useLocalStorageFallback = true;
-            try {
-                const saved = localStorage.getItem('versik_app_state');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    if (parsed && Array.isArray(parsed.verses)) {
-                        window.appState = parsed;
-                    }
-                }
-            } catch (e) {
-                console.warn("LocalStorage fallback failed:", e);
-            }
-            const statusText = document.getElementById('cloud-status-text');
-            if (statusText) statusText.innerText = 'Uloženo lokálně';
-            const userDisplay = document.getElementById('user-id-display');
-            if (userDisplay) userDisplay.innerText = 'Lokální profil';
-            updateStatsUI();
-            renderVerseList();
-            renderProgressOverview();
-        }
-
-        // AUTH INITIALIZATION
         async function initAuth() {
             try {
-                let app, auth, db;
-                app = initializeApp(firebaseConfig);
+                const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
-                
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
 
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         window.currentUser = user;
                         const userDisplay = document.getElementById('user-id-display');
-                        if (userDisplay) userDisplay.innerText = user.uid;
+                        if (userDisplay) userDisplay.innerText = user.email ? user.email : `Anonym (${user.uid.substring(0,6)}...)`;
                         
                         const statusText = document.getElementById('cloud-status-text');
-                        if (statusText) statusText.innerText = 'Cloud Online';
+                        if (statusText) statusText.innerText = user.email ? 'Účet Připojen' : 'Anonymní Cloud';
 
                         await loadUserData(db);
                     } else {
-                        loadLocalFallback();
+                        // Přihlásit anonymně, pokud nikdo není přihlášen
+                        await signInAnonymously(auth);
                     }
                     updateStatsUI();
                     renderVerseList();
                     renderProgressOverview();
                 });
             } catch (err) {
-                console.warn("Firebase not available or iframe blocked, using LocalStorage fallback:", err);
+                console.warn("Firebase nepřípojen, použito lokální uložení:", err);
                 loadLocalFallback();
             }
         }
 
-        // FIRESTORE SAVE & LOAD
-        window.saveState = async function() {
-            if (useLocalStorageFallback || !window.currentUser) {
-                try {
-                    localStorage.setItem('versik_app_state', JSON.stringify(window.appState));
-                    const statusText = document.getElementById('cloud-status-text');
-                    if (statusText) statusText.innerText = 'Uloženo (Lokálně)';
-                } catch(e) {
-                    console.error("Local save error", e);
+        function loadLocalFallback() {
+            try {
+                const saved = localStorage.getItem('versik_app_state');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && Array.isArray(parsed.verses)) window.appState = parsed;
                 }
+            } catch (e) {}
+            const statusText = document.getElementById('cloud-status-text');
+            if (statusText) statusText.innerText = 'Uloženo Lokálně';
+            const userDisplay = document.getElementById('user-id-display');
+            if (userDisplay) userDisplay.innerText = 'Offline režim';
+            updateStatsUI();
+            renderVerseList();
+            renderProgressOverview();
+        }
+
+        window.saveState = async function() {
+            if (!window.currentUser || !db) {
+                localStorage.setItem('versik_app_state', JSON.stringify(window.appState));
                 return;
             }
 
@@ -486,12 +495,9 @@
                 const userDocRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'appData', 'state');
                 await setDoc(userDocRef, window.appState);
                 const statusText = document.getElementById('cloud-status-text');
-                if (statusText) statusText.innerText = 'Uloženo na Cloud';
+                if (statusText) statusText.innerText = 'Uloženo v Cloudu';
             } catch (err) {
-                console.error("Cloud save error, fallback to local:", err);
                 localStorage.setItem('versik_app_state', JSON.stringify(window.appState));
-                const statusText = document.getElementById('cloud-status-text');
-                if (statusText) statusText.innerText = 'Uloženo (Lokálně)';
             }
         };
 
@@ -502,17 +508,35 @@
                 const docSnap = await getDoc(userDocRef);
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    if (data && Array.isArray(data.verses)) {
-                        window.appState = data;
-                    }
+                    if (data && Array.isArray(data.verses)) window.appState = data;
                 } else {
                     await window.saveState();
                 }
             } catch (err) {
-                console.error("Cloud load error, falling back to local:", err);
                 loadLocalFallback();
             }
         }
+
+        window.handleAuthSubmit = async function(event) {
+            event.preventDefault();
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+
+            if (!email || !password) return;
+
+            try {
+                if (window.authMode === 'register') {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    showModal('Účet byl úspěšně vytvořen! Vaše verše jsou nyní bezpečně v cloudu.', 'Registrace Úspěšná', 'fa-solid fa-circle-check text-duo-green');
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    showModal('Byl/a jste úspěšně přihlášen/a k účtu!', 'Přihlášeno', 'fa-solid fa-circle-check text-duo-green');
+                }
+                closeAuthModal();
+            } catch (err) {
+                showModal('Chyba při přihlašování/registraci: ' + err.message, 'Chyba Přihlášení', 'fa-solid fa-triangle-exclamation text-duo-red');
+            }
+        };
 
         initAuth();
     </script>
@@ -542,6 +566,14 @@
         };
 
         let currentProgressFilter = 'all';
+
+        function openAuthModal() {
+            document.getElementById('auth-modal').classList.remove('hidden');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
+        }
 
         function updateStatsUI() {
             if (!window.appState) return;
@@ -723,7 +755,6 @@
             else if (mode === 'fade') setupFadeMode(container, footer);
         }
 
-        // --- MÓD 1: SKLÁDAČKA ---
         function setupAssembleMode(container) {
             document.getElementById('game-mode-title').innerText = '🧩 Poskládej slova verše';
             currentGame.targetWords = currentGame.verse.text.split(' ');
@@ -779,7 +810,6 @@
             renderAssembleTiles();
         }
 
-        // --- MÓD 2: DOPLŇOVAČKA ---
         function setupFillMode(container) {
             document.getElementById('game-mode-title').innerText = '✍️ Doplň chybějící slovo';
             const words = currentGame.verse.text.split(' ');
@@ -796,7 +826,6 @@
             `;
         }
 
-        // --- MÓD 3: KVÍZ ODKAZŮ ---
         function setupMCMode(container) {
             document.getElementById('game-mode-title').innerText = '❓ Vyber správný odkaz verše';
             
@@ -835,7 +864,6 @@
             });
         }
 
-        // --- MÓD 4: MIZEJÍCÍ TEXT ---
         function setupFadeMode(container, footer) {
             document.getElementById('game-mode-title').innerText = '👁️ Zapamatuj si a ověř text';
             currentGame.fadeLevel = Math.floor(Math.random() * 2) + 1;
@@ -902,7 +930,6 @@
             finishAnswer(userKnew, userKnew ? "Skvěle! Verš ovládáš správně." : "Verš je potřeba ještě více procvičit.");
         }
 
-        // ==================== KONTROLA ODPOVĚDÍ ====================
         function checkAnswer() {
             if (currentGame.checked) {
                 if (currentGame.isSolo) {
@@ -1032,7 +1059,6 @@
             }
         }
 
-        // ==================== POMOCNÉ FUNKCE ====================
         function cleanWord(w) {
             return w.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()"?]/g, "").trim();
         }
@@ -1048,7 +1074,6 @@
             return newArr;
         }
 
-        // ==================== PŘEHLEDKY POKROKU ====================
         function renderProgressOverview() {
             const listContainer = document.getElementById('progress-list');
             if (!listContainer || !window.appState) return;
@@ -1121,7 +1146,6 @@
             renderProgressOverview();
         }
 
-        // ==================== SPRÁVA & ÚPRAVA VERŠŮ ====================
         function renderVerseList() {
             const container = document.getElementById('verses-list');
             if (!container || !window.appState) return;
@@ -1241,7 +1265,6 @@
             );
         }
 
-        // ==================== CSV IMPORT A EXPORT ====================
         function handleCSVImport(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1356,12 +1379,13 @@
 
             const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'krepinskym_2.csv';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            const a = document.getElementById('a');
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'krepinskym_2.csv';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
             URL.revokeObjectURL(url);
         }
     </script>
